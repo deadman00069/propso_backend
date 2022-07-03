@@ -78,12 +78,12 @@ class UserController extends Controller
                 $user->assignRole('admin');
             }
 
-            //if role == 1 , its user
+            //if role == 1 , its customer
             if ($role == 1) {
                 $user->assignRole('user');
             }
 
-            //if role == 2, its counselor
+            //if role == 2, its CP
             if ($role == 2) {
                 $user->assignRole('lead_generator');
             }
