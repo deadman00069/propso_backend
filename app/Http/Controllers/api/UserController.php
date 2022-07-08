@@ -71,19 +71,19 @@ class UserController extends Controller
             ]);
 
 
-            $token = $user->createToken('access-token');
+            $token = $user->createToken('access-token')->plainTextToken;
 
             //if role == 0 , its admin
             if ($role == 0) {
                 $user->assignRole('admin');
             }
 
-            //if role == 1 , its customer
+            //if role == 1 , its user
             if ($role == 1) {
                 $user->assignRole('user');
             }
 
-            //if role == 2, its CP
+            //if role == 2, its counselor
             if ($role == 2) {
                 $user->assignRole('lead_generator');
             }
@@ -128,7 +128,7 @@ class UserController extends Controller
             $password = $request->get('password');
 
             //Fetching user with email
-            $user = User::where('email', $email)->first();
+            $user = User::with('roles')->where('email', $email)->first();
 
             //if user not found or credentials don't match
             if (!$user || !Hash::check($password, $user->password)) {

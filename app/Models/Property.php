@@ -23,6 +23,8 @@ class Property extends Model
         'how_many_bathroom',
         'latitude',
         'longitude',
+        'price',
+        'discount',
     ];
 
     public function images()

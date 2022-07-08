@@ -19,6 +19,7 @@ return new class extends Migration {
             $table->string('name');
             $table->string('latitude');
             $table->string('longitude');
+            $table->tinyInteger('is_featured')->default(0);
             $table->timestamps();
         });
     }

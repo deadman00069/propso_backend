@@ -30,6 +30,9 @@ return new class extends Migration {
             $table->string('how_many_bathroom');
             $table->string('latitude');
             $table->string('longitude');
+            $table->tinyInteger('is_featured')->default(0);
+            $table->decimal('price');
+            $table->decimal('discount');
             $table->timestamps();
         });
     }

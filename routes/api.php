@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// All protected apis
+// All public apis
 Route::post('sign-up', [UserController::class, 'signUp']);
 Route::post('login', [UserController::class, 'login']);
 Route::post('admin-login', [UserController::class, 'adminLogin']);
@@ -33,7 +33,9 @@ Route::get('get-all-property-category', [PropertyCategoryController::class, 'get
 Route::get('get-all-property-type', [PropertyTypeController::class, 'getAllPropertyType']);
 Route::get('get-all-facility', [FacilityController::class, 'getAllFacilities']);
 Route::get('get-all-kyc', [KycController::class, 'getAllKyc']);
-Route::post('get-all-property', [PropertyController::class, 'getAllProperty']);
+Route::get('get-all-property', [PropertyController::class, 'getAllProperty']);
+Route::get('get-all-property-by-distance', [PropertyController::class, 'getPropertyByDistance']);
+Route::get('search', [PropertyController::class, 'searchProperty']);
 Route::get('test', [KycController::class, 'createUid']);
 Route::get('php_info', function (){
     return phpinfo();

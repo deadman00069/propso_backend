@@ -10,7 +10,9 @@ use App\Models\PropertyImage;
 use App\Models\PropertyVideo;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Validator;
+use function PHPUnit\Framework\isEmpty;
 
 class PropertyController extends Controller
 {
@@ -47,7 +49,9 @@ class PropertyController extends Controller
                 'image.*' => 'mimes:jpg,jpeg,png|max:10024',
                 'video' => 'required',
                 'video.*' => 'mimes:mp4|max:20024',
-                'facility' => 'required|array'
+                'facility' => 'required|array',
+                'price' => 'required',
+                'discount' => 'required',
             ]);
 
             if ($validate->fails()) {
@@ -72,6 +76,8 @@ class PropertyController extends Controller
                 'how_many_bathroom' => $request->get('how_many_bathroom'),
                 'latitude' => $request->get('latitude'),
                 'longitude' => $request->get('longitude'),
+                'price' => $request->get('price'),
+                'discount' => $request->get('discount'),
             ]);
 
             //Getting all images
@@ -142,7 +148,16 @@ class PropertyController extends Controller
                 [
                     'status' => true,
                     'message' => 'Property fetch success',
-                    'data' => Property::with('images', 'videos', 'facility', 'city', 'location', 'propertyCategory', 'propertyType')->get(),
+                    'data' => Property::
+                    with(
+                        'images',
+                        'videos', 'facility',
+                        'city',
+                        'location',
+                        'propertyCategory',
+                        'propertyType'
+                    )
+                        ->cursorPaginate(20),
                 ]
             );
 
@@ -152,6 +167,153 @@ class PropertyController extends Controller
                 'message' => '' . $e,
             ], 409);
         }
+
+    }
+
+    public function searchProperty(Request $request)
+    {
+
+        try {
+            // For validating fields
+            $validate = Validator::make($request->all(), [
+                'name' => 'required',
+            ]);
+
+            // If validation fails
+            if ($validate->fails()) {
+                return response([
+                    'status' => false,
+                    'message' => $validate->errors(),
+                ], 409);
+            }
+
+            // Creating query
+            $query = Property::
+            with(
+                'images',
+                'videos',
+                'facility',
+                'city',
+                'location',
+                'propertyCategory',
+                'propertyType'
+            );
+
+            // Getting all values
+            $name = $request->get('name');
+            $city = $request->get('city');
+            $location = $request->get('location');
+            $category = $request->get('category');
+            $type = $request->get('type');
+
+            // For performing search
+            if ($name) {
+                $query->where(
+                    'title',
+                    'LIKE',
+                    "%{$name}%"
+                );
+            }
+
+            // For filtering with city
+            if ($city) {
+                $query->whereHas('city', function ($q) use ($request) {
+                    $q->where('name', $request->get('city'));
+                });
+            }
+
+            // For filtering with location
+            if ($location) {
+                $query->whereHas('location', function ($q) use ($request) {
+                    $q->where('name', $request->get('location'));
+                });
+            }
+
+            // For filtering with category
+            if ($category) {
+                $query->whereHas('propertyCategory', function ($q) use ($request) {
+                    $q->where('name', $request->get('category'));
+                });
+            }
+
+            // For filtering with type
+            if ($type) {
+                $query->whereHas('propertyType', function ($q) use ($request) {
+                    $q->where('name', $request->get('type'));
+                });
+            }
+
+            return response([
+                'status' => true,
+                'message' => 'Search success',
+                'data' => $query
+                    ->cursorPaginate(20),
+            ]);
+
+
+        } catch (Exception $e) {
+            return response([
+                'status' => false,
+                'message' => '' . $e,
+            ], 409);
+        }
+
+
+    }
+
+    public function getPropertyByDistance(Request $request)
+    {
+        try {
+
+            $validate = Validator::make($request->all(), [
+                'latitude' => 'required',
+                'longitude' => 'required',
+            ]);
+
+            if ($validate->fails()) {
+                return response([
+                    'status' => false,
+                    'message' => $validate->errors(),
+                ], 409);
+            }
+
+            //
+
+//            $latitude = $request->get('latitude');
+//            $longitude = $request->get('longitude');
+            $latitude = '28.4469';
+            $longitude = '77.0106';
+
+
+            $listOfProperty = Property::with(
+                'images',
+                'videos', 'facility',
+                'city',
+                'location',
+                'propertyCategory',
+                'propertyType'
+            )
+                ->select("*", DB::raw("6371 * acos(cos(radians(" . $latitude . "))
+                                * cos(radians(latitude)) * cos(radians(longitude) - radians(" . $longitude . "))
+                                + sin(radians(" . $latitude . ")) * sin(radians(latitude))) AS distance"));
+            $listOfProperty = $listOfProperty->having('distance', '<', 30);
+            $listOfProperty = $listOfProperty->orderBy('distance', 'asc');
+            $listOfProperty = $listOfProperty->cursorPaginate(20);
+
+            return response([
+                'status' => true,
+                'message' => 'Property fetch success',
+                'data' => $listOfProperty,
+            ]);
+
+
+        } catch (Exception $e) {
+            return response([
+                'status' => false,
+                'message' => '' . $e,
+            ], 409);
+        }
+
 
     }
 }
